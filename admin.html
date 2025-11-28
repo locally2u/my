@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pipah Admin 3.0</title>
+    <title>Pipah Admin 3.1</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
     
@@ -20,7 +20,6 @@
 </head>
 <body class="text-slate-800">
 
-    <!-- LOGIN -->
     <div id="auth-screen" class="fixed inset-0 bg-slate-900 flex items-center justify-center z-50">
         <div class="bg-white p-8 rounded-2xl shadow-2xl w-96 text-center">
             <h1 class="text-2xl font-bold text-amber-700 mb-2">Pipah Owner</h1>
@@ -29,10 +28,8 @@
         </div>
     </div>
 
-    <!-- DASHBOARD -->
     <div id="dashboard" class="hidden flex h-screen flex-col md:flex-row overflow-hidden">
         
-        <!-- SIDEBAR -->
         <aside class="w-full md:w-64 bg-white border-r border-slate-200 flex-shrink-0 flex flex-col">
             <div class="p-6 border-b font-bold text-xl text-amber-700">🍪 Admin Panel</div>
             <nav class="flex-1 p-4 space-y-2 overflow-y-auto">
@@ -45,10 +42,8 @@
             <div class="p-4 border-t"><button onclick="location.reload()" class="w-full text-left px-4 py-3 text-red-500 hover:bg-red-50 rounded-lg">Keluar</button></div>
         </aside>
 
-        <!-- MAIN -->
         <main class="flex-1 p-6 md:p-10 overflow-y-auto bg-slate-50">
             
-            <!-- PRODUCTS -->
             <div id="view-products">
                 <div class="flex justify-between items-center mb-8">
                     <h2 class="text-3xl font-bold">Produk</h2>
@@ -59,7 +54,6 @@
                 </div>
             </div>
 
-            <!-- HERO -->
             <div id="view-hero" class="hidden">
                 <div class="flex justify-between items-center mb-8">
                     <h2 class="text-3xl font-bold">Hero Banner</h2>
@@ -68,7 +62,6 @@
                 <div id="hero-grid" class="grid grid-cols-1 md:grid-cols-2 gap-6"></div>
             </div>
 
-            <!-- TRENDING (PRODUCT MODE) -->
             <div id="view-trending" class="hidden">
                 <div class="flex justify-between items-center mb-8">
                     <div>
@@ -80,7 +73,6 @@
                 <div id="trending-grid" class="grid grid-cols-2 md:grid-cols-4 gap-6"></div>
             </div>
 
-            <!-- GALLERY -->
             <div id="view-gallery" class="hidden">
                 <div class="flex justify-between items-center mb-8">
                     <h2 class="text-3xl font-bold">Galeri 3D</h2>
@@ -89,7 +81,6 @@
                 <div id="gallery-grid" class="grid grid-cols-3 md:grid-cols-5 gap-4"></div>
             </div>
 
-            <!-- SETTINGS -->
             <div id="view-settings" class="hidden">
                 <h2 class="text-3xl font-bold mb-8">Tetapan</h2>
                 <div class="bg-white p-8 rounded-2xl shadow-sm border max-w-lg space-y-6">
@@ -102,7 +93,6 @@
         </main>
     </div>
 
-    <!-- MODAL PRODUCT -->
     <div id="modal" class="fixed inset-0 bg-black/60 hidden flex items-center justify-center p-4 backdrop-blur-sm">
         <div class="bg-white rounded-2xl w-full max-w-md p-6 shadow-2xl relative">
             <h3 class="text-xl font-bold mb-6" id="modal-title">Produk</h3>
@@ -111,7 +101,11 @@
                 <input id="inp-name" class="w-full border p-3 rounded-lg" placeholder="Nama Produk">
                 <div class="flex gap-4">
                     <input type="number" id="inp-price" class="w-full border p-3 rounded-lg" placeholder="Harga">
-                    <select id="inp-cat" class="w-full border p-3 rounded-lg bg-white"><option value="Cookies">Cookies</option><option value="Brownies">Brownies</option><option value="Combo">Combo</option></select>
+                    <select id="inp-cat" class="w-full border p-3 rounded-lg bg-white">
+                        <option value="Cookies">Cookies</option>
+                        <option value="Desserts">Desserts</option>
+                        <option value="Combo">Combo</option>
+                    </select>
                 </div>
                 <div class="flex items-center gap-4 border p-3 rounded-lg">
                     <img id="inp-preview" src="https://placehold.co/100" class="w-16 h-16 rounded object-cover">
@@ -200,7 +194,6 @@
 
         function addHero(){ const t=prompt("Tajuk Banner:"); if(t) uploadImageWidget(u=>db.collection('hero_banners').add({title:t,image:u})); }
         
-        // NEW: Add Trending Product
         function addTrending(){ 
             const n=prompt("Nama Produk Trending:"); 
             if(!n)return; 
@@ -222,5 +215,3 @@
     </script>
 </body>
 </html>
-
-
