@@ -151,22 +151,17 @@
 
     <script>
         // Import the functions you need from the SDKs you need
-import { initializeApp } from "firebase/app";
-// TODO: Add SDKs for Firebase products that you want to use
-// https://firebase.google.com/docs/web/setup#available-libraries
+import {// --- KONFIGURASI FIREBASE (MASUKKAN API KEY ANDA DI SINI) ---
+    // Jangan biarkan 'API_KEY_ANDA', wajib ganti dengan kod sebenar!
+    const firebaseConfig = {
+        apiKey: "AIzaSyA2Y2cOh3J7U916Ip0tnDDFVs2fK6sACl0",  // <--- Ganti ini
+        authDomain: "pipahcookies-21e38.firebaseapp.com", // <--- Ganti ini
+        projectId: "pipahcookies-21e38", // <--- Ganti ini
+        storageBucket: "PROJECT_ID.firebasestorage.app",
+        messagingSenderId: "SENDER_ID",
+        appId: "APP_ID"
+    };
 
-// Your web app's Firebase configuration
-const firebaseConfig = {
-  apiKey: "AIzaSyA2Y2cOh3J7U916Ip0tnDDFVs2fK6sACl0",
-  authDomain: "pipahcookies-21e38.firebaseapp.com",
-  projectId: "pipahcookies-21e38",
-  storageBucket: "pipahcookies-21e38.firebasestorage.app",
-  messagingSenderId: "162482379926",
-  appId: "1:162482379926:web:14d16f5a2444816876f6b7"
-};
-
-// Initialize Firebase
-const app = initializeApp(firebaseConfig);
 
         // Cloudinary (Untuk Upload Gambar)
         // Daftar percuma di cloudinary.com > Settings > Upload > Add Preset (Mode: Unsigned)
