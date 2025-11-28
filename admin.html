@@ -8,7 +8,7 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
     
-    <!-- Firebase SDKs -->
+    <!-- Firebase SDKs (Compat Version 8 - Wajib untuk kod ini) -->
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
     
@@ -17,8 +17,6 @@
 
     <style>
         body { font-family: 'Inter', sans-serif; background: #f8fafc; }
-        .spinner { border: 3px solid rgba(0,0,0,0.1); border-left-color: #A67734; border-radius: 50%; width: 20px; height: 20px; animation: spin 1s linear infinite; display: inline-block; }
-        @keyframes spin { 100% { transform: rotate(360deg); } }
     </style>
 </head>
 <body class="text-slate-800">
@@ -72,6 +70,7 @@
                         </thead>
                         <tbody id="product-tbody" class="divide-y divide-slate-100">
                             <!-- JS will populate -->
+                            <tr><td colspan="5" class="p-4 text-center text-gray-400">Sedang memuatkan data...</td></tr>
                         </tbody>
                     </table>
                 </div>
@@ -150,32 +149,35 @@
     </div>
 
     <script>
-        // Import the functions you need from the SDKs you need
-import {// --- KONFIGURASI FIREBASE (MASUKKAN API KEY ANDA DI SINI) ---
-    // Jangan biarkan 'API_KEY_ANDA', wajib ganti dengan kod sebenar!
-    const firebaseConfig = {
-        apiKey: "AIzaSyA2Y2cOh3J7U916Ip0tnDDFVs2fK6sACl0",  // <--- Ganti ini
-        authDomain: "pipahcookies-21e38.firebaseapp.com", // <--- Ganti ini
-        projectId: "pipahcookies-21e38", // <--- Ganti ini
-        storageBucket: "PROJECT_ID.firebasestorage.app",
-        messagingSenderId: "SENDER_ID",
-        appId: "APP_ID"
-    };
+        // --- 1. CONFIGURATION (FIREBASE) ---
+        // Saya telah betulkan bahagian ini untuk buang syntax 'import' yang salah
+        const firebaseConfig = {
+            apiKey: "AIzaSyA2Y2cOh3J7U916Ip0tnDDFVs2fK6sACl0",
+            authDomain: "pipahcookies-21e38.firebaseapp.com",
+            projectId: "pipahcookies-21e38",
+            storageBucket: "pipahcookies-21e38.firebasestorage.app",
+            messagingSenderId: "162482379926",
+            appId: "1:162482379926:web:14d16f5a2444816876f6b7"
+        };
 
-
-        // Cloudinary (Untuk Upload Gambar)
-        // Daftar percuma di cloudinary.com > Settings > Upload > Add Preset (Mode: Unsigned)
+        // --- 2. CONFIGURATION (CLOUDINARY) ---
+        // Pastikan 'Upload Preset' di Cloudinary anda disetkan sebagai "Unsigned"
         const cloudName = "dggh4uztz"; 
         const uploadPreset = "PipahCookies"; 
 
-        // --- INIT ---
-        if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+        // --- INIT FIREBASE ---
+        try {
+            if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+        } catch(e) {
+            console.error("Firebase Error:", e);
+            alert("Masalah sambungan Firebase. Sila semak console.");
+        }
         const db = firebase.firestore();
 
         // --- AUTH ---
         function login() {
             const pin = document.getElementById('pin-code').value;
-            if(pin === "1234") { // Default PIN mudah
+            if(pin === "1234") { // Boleh tukar PIN ini jika mahu
                 document.getElementById('auth-screen').classList.add('hidden');
                 document.getElementById('dashboard').classList.remove('hidden');
                 loadData();
@@ -212,6 +214,7 @@ import {// --- KONFIGURASI FIREBASE (MASUKKAN API KEY ANDA DI SINI) ---
                         </tr>
                     `;
                 });
+                if(snap.empty) tbody.innerHTML = `<tr><td colspan="5" class="p-4 text-center">Tiada produk. Sila tambah.</td></tr>`;
             });
 
             // LOAD BANNERS
@@ -267,11 +270,6 @@ import {// --- KONFIGURASI FIREBASE (MASUKKAN API KEY ANDA DI SINI) ---
                 image: document.getElementById('inp-img-url').value || 'https://placehold.co/300?text=No+Image'
             };
 
-            // LOGIC "REPLACE": 
-            // Kita kemaskini URL dalam DB. Gambar lama di cloud storage akan kekal (sebagai fail yatim)
-            // kerana client-side delete adalah tidak selamat tanpa backend server.
-            // Namun, di mata user dan app, gambar telah "diganti" sepenuhnya.
-
             if(id) db.collection('products').doc(id).update(data);
             else db.collection('products').add(data);
 
@@ -287,7 +285,6 @@ import {// --- KONFIGURASI FIREBASE (MASUKKAN API KEY ANDA DI SINI) ---
             const title = prompt("Tajuk Banner:");
             if(!title) return;
             
-            // Buka widget terus untuk upload banner
             cloudinary.createUploadWidget({ cloudName, uploadPreset }, (err, result) => {
                 if(!err && result && result.event === "success") {
                     db.collection('banners').add({
@@ -325,7 +322,6 @@ import {// --- KONFIGURASI FIREBASE (MASUKKAN API KEY ANDA DI SINI) ---
             });
             widget.open();
         }
-
     </script>
 </body>
 </html>
