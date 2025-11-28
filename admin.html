@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="ms">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pipah Admin 3.0</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+    <script src="https://upload-widget.cloudinary.com/global/all.js"></script>
+
+    <style>
+        body { font-family: 'Inter', sans-serif; background: #f1f5f9; }
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: #f1f5f9; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
+    </style>
+</head>
+<body class="text-slate-800">
+
+    <!-- LOGIN -->
+    <div id="auth-screen" class="fixed inset-0 bg-slate-900 flex items-center justify-center z-50">
+        <div class="bg-white p-8 rounded-2xl shadow-2xl w-96 text-center">
+            <h1 class="text-2xl font-bold text-amber-700 mb-2">Pipah Owner</h1>
+            <input type="password" id="pin-code" class="w-full border p-3 rounded-xl mb-4 text-center tracking-widest" placeholder="••••">
+            <button onclick="login()" class="w-full bg-amber-600 text-white font-bold p-3 rounded-xl hover:bg-amber-700">Masuk</button>
+        </div>
+    </div>
+
+    <!-- DASHBOARD -->
+    <div id="dashboard" class="hidden flex h-screen flex-col md:flex-row overflow-hidden">
+        
+        <!-- SIDEBAR -->
+        <aside class="w-full md:w-64 bg-white border-r border-slate-200 flex-shrink-0 flex flex-col">
+            <div class="p-6 border-b font-bold text-xl text-amber-700">🍪 Admin Panel</div>
+            <nav class="flex-1 p-4 space-y-2 overflow-y-auto">
+                <button onclick="nav('products')" class="w-full text-left px-4 py-3 rounded-lg hover:bg-amber-50 font-medium text-slate-700 focus:bg-amber-100 transition">📦 Produk</button>
+                <button onclick="nav('hero')" class="w-full text-left px-4 py-3 rounded-lg hover:bg-amber-50 font-medium text-slate-700 focus:bg-amber-100 transition">🖼️ Hero Banner</button>
+                <button onclick="nav('trending')" class="w-full text-left px-4 py-3 rounded-lg hover:bg-amber-50 font-medium text-slate-700 focus:bg-amber-100 transition flex items-center gap-2">🔥 Trending Product</button>
+                <button onclick="nav('gallery')" class="w-full text-left px-4 py-3 rounded-lg hover:bg-amber-50 font-medium text-slate-700 focus:bg-amber-100 transition">📸 Galeri 3D</button>
+                <button onclick="nav('settings')" class="w-full text-left px-4 py-3 rounded-lg hover:bg-amber-50 font-medium text-slate-700 focus:bg-amber-100 transition">⚙️ Tetapan</button>
+            </nav>
+            <div class="p-4 border-t"><button onclick="location.reload()" class="w-full text-left px-4 py-3 text-red-500 hover:bg-red-50 rounded-lg">Keluar</button></div>
+        </aside>
+
+        <!-- MAIN -->
+        <main class="flex-1 p-6 md:p-10 overflow-y-auto bg-slate-50">
+            
+            <!-- PRODUCTS -->
+            <div id="view-products">
+                <div class="flex justify-between items-center mb-8">
+                    <h2 class="text-3xl font-bold">Produk</h2>
+                    <button onclick="openModal()" class="bg-amber-600 text-white px-6 py-3 rounded-xl font-bold shadow hover:bg-amber-700">+ Produk</button>
+                </div>
+                <div class="bg-white rounded-2xl shadow-sm border overflow-hidden">
+                    <table class="w-full text-left"><tbody id="product-tbody" class="divide-y"></tbody></table>
+                </div>
+            </div>
+
+            <!-- HERO -->
+            <div id="view-hero" class="hidden">
+                <div class="flex justify-between items-center mb-8">
+                    <h2 class="text-3xl font-bold">Hero Banner</h2>
+                    <button onclick="addHero()" class="bg-indigo-600 text-white px-6 py-3 rounded-xl font-bold shadow hover:bg-indigo-700">+ Banner</button>
+                </div>
+                <div id="hero-grid" class="grid grid-cols-1 md:grid-cols-2 gap-6"></div>
+            </div>
+
+            <!-- TRENDING (PRODUCT MODE) -->
+            <div id="view-trending" class="hidden">
+                <div class="flex justify-between items-center mb-8">
+                    <div>
+                        <h2 class="text-3xl font-bold">Trending Products 🔥</h2>
+                        <p class="text-sm text-slate-500">Item ini akan muncul di slider 3D.</p>
+                    </div>
+                    <button onclick="addTrending()" class="bg-orange-600 text-white px-6 py-3 rounded-xl font-bold shadow hover:bg-orange-700">+ Trending Item</button>
+                </div>
+                <div id="trending-grid" class="grid grid-cols-2 md:grid-cols-4 gap-6"></div>
+            </div>
+
+            <!-- GALLERY -->
+            <div id="view-gallery" class="hidden">
+                <div class="flex justify-between items-center mb-8">
+                    <h2 class="text-3xl font-bold">Galeri 3D</h2>
+                    <button onclick="addGallery()" class="bg-pink-600 text-white px-6 py-3 rounded-xl font-bold shadow hover:bg-pink-700">+ Gambar</button>
+                </div>
+                <div id="gallery-grid" class="grid grid-cols-3 md:grid-cols-5 gap-4"></div>
+            </div>
+
+            <!-- SETTINGS -->
+            <div id="view-settings" class="hidden">
+                <h2 class="text-3xl font-bold mb-8">Tetapan</h2>
+                <div class="bg-white p-8 rounded-2xl shadow-sm border max-w-lg space-y-6">
+                    <div><label class="block font-bold mb-2">WhatsApp Admin</label><input id="setting-wa" class="w-full border p-3 rounded-lg"></div>
+                    <div><label class="block font-bold mb-2">Link Reseller</label><input id="setting-reseller" class="w-full border p-3 rounded-lg"></div>
+                    <button onclick="saveSettings()" class="w-full bg-green-600 text-white py-3 rounded-lg font-bold shadow">Simpan</button>
+                </div>
+            </div>
+
+        </main>
+    </div>
+
+    <!-- MODAL PRODUCT -->
+    <div id="modal" class="fixed inset-0 bg-black/60 hidden flex items-center justify-center p-4 backdrop-blur-sm">
+        <div class="bg-white rounded-2xl w-full max-w-md p-6 shadow-2xl relative">
+            <h3 class="text-xl font-bold mb-6" id="modal-title">Produk</h3>
+            <input type="hidden" id="inp-id">
+            <div class="space-y-4">
+                <input id="inp-name" class="w-full border p-3 rounded-lg" placeholder="Nama Produk">
+                <div class="flex gap-4">
+                    <input type="number" id="inp-price" class="w-full border p-3 rounded-lg" placeholder="Harga">
+                    <select id="inp-cat" class="w-full border p-3 rounded-lg bg-white"><option value="Cookies">Cookies</option><option value="Brownies">Brownies</option><option value="Combo">Combo</option></select>
+                </div>
+                <div class="flex items-center gap-4 border p-3 rounded-lg">
+                    <img id="inp-preview" src="https://placehold.co/100" class="w-16 h-16 rounded object-cover">
+                    <input type="hidden" id="inp-img-url">
+                    <button onclick="uploadImage('inp-img-url','inp-preview')" class="text-sm bg-slate-100 px-3 py-2 rounded font-bold w-full">Upload Gambar</button>
+                </div>
+            </div>
+            <div class="mt-6 flex justify-end gap-3">
+                <button onclick="closeModal()" class="px-5 py-2 text-slate-500 font-bold">Batal</button>
+                <button onclick="saveProduct()" class="px-6 py-2 bg-amber-600 text-white font-bold rounded-lg">Simpan</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const firebaseConfig = {
+            apiKey: "AIzaSyA2Y2cOh3J7U916Ip0tnDDFVs2fK6sACl0",
+            authDomain: "pipahcookies-21e38.firebaseapp.com",
+            projectId: "pipahcookies-21e38",
+            storageBucket: "pipahcookies-21e38.firebasestorage.app",
+            messagingSenderId: "162482379926",
+            appId: "1:162482379926:web:14d16f5a2444816876f6b7"
+        };
+        const cloudName = "dggh4uztz"; const uploadPreset = "PipahCookies"; 
+
+        try{if(!firebase.apps.length)firebase.initializeApp(firebaseConfig);}catch(e){}
+        const db = firebase.firestore();
+
+        function login(){
+            if(document.getElementById('pin-code').value==="1234"){
+                document.getElementById('auth-screen').classList.add('hidden');
+                document.getElementById('dashboard').classList.remove('hidden');
+                loadAllData();
+            } else alert("Salah!");
+        }
+
+        function nav(view){
+            ['products','hero','trending','gallery','settings'].forEach(id=>document.getElementById('view-'+id).classList.add('hidden'));
+            document.getElementById('view-'+view).classList.remove('hidden');
+        }
+
+        function loadAllData(){
+            // Products
+            db.collection('products').onSnapshot(s=>{
+                const t=document.getElementById('product-tbody'); t.innerHTML='';
+                s.forEach(d=>{
+                    const p=d.data();
+                    t.innerHTML+=`<tr class="border-b"><td class="p-4"><img src="${p.image}" class="w-10 h-10 rounded bg-gray-100"></td><td class="p-4 font-bold">${p.name}</td><td class="p-4 text-xs">${p.category}</td><td class="p-4">RM${p.price}</td><td class="p-4 text-right"><button onclick="editProduct('${d.id}','${p.name}','${p.price}','${p.category}','${p.image}')" class="text-blue-600 mr-4 font-bold">Edit</button><button onclick="del('products','${d.id}')" class="text-red-500 font-bold">X</button></td></tr>`;
+                });
+            });
+            // Hero
+            db.collection('hero_banners').onSnapshot(s=>{
+                const g=document.getElementById('hero-grid'); g.innerHTML='';
+                s.forEach(d=>g.innerHTML+=`<div class="relative group rounded-xl overflow-hidden border"><img src="${d.data().image}" class="w-full h-32 object-cover"><div class="p-2 text-xs font-bold">${d.data().title||'-'}</div><button onclick="del('hero_banners','${d.id}')" class="absolute top-1 right-1 bg-red-600 text-white px-2 rounded">X</button></div>`);
+            });
+            // Trending
+            db.collection('trending_products').onSnapshot(s=>{
+                const g=document.getElementById('trending-grid'); g.innerHTML='';
+                s.forEach(d=>g.innerHTML+=`<div class="relative group rounded-xl overflow-hidden border"><img src="${d.data().image}" class="w-full h-48 object-cover"><div class="p-2 bg-white"><div class="font-bold text-sm">${d.data().name}</div><div class="text-xs font-bold text-orange-600">RM ${d.data().price}</div></div><button onclick="del('trending_products','${d.id}')" class="absolute top-1 right-1 bg-red-600 text-white px-2 rounded">X</button></div>`);
+            });
+            // Gallery
+            db.collection('gallery_images').onSnapshot(s=>{
+                const g=document.getElementById('gallery-grid'); g.innerHTML='';
+                s.forEach(d=>g.innerHTML+=`<div class="relative group rounded-xl overflow-hidden border"><img src="${d.data().image}" class="w-full h-24 object-cover"><button onclick="del('gallery_images','${d.id}')" class="absolute top-1 right-1 bg-red-600 text-white px-2 rounded text-xs">X</button></div>`);
+            });
+            // Settings
+            db.collection('settings').doc('config').get().then(d=>{
+                if(d.exists){
+                    document.getElementById('setting-wa').value=d.data().whatsapp||'';
+                    document.getElementById('setting-reseller').value=d.data().resellerLink||'';
+                }
+            });
+        }
+
+        // --- ACTIONS ---
+        function openModal(){ document.getElementById('inp-id').value=""; document.getElementById('inp-name').value=""; document.getElementById('inp-price').value=""; document.getElementById('inp-img-url').value=""; document.getElementById('inp-preview').src="https://placehold.co/100"; document.getElementById('modal').classList.remove('hidden'); }
+        function closeModal(){ document.getElementById('modal').classList.add('hidden'); }
+        
+        function editProduct(id,n,p,c,i){ document.getElementById('inp-id').value=id; document.getElementById('inp-name').value=n; document.getElementById('inp-price').value=p; document.getElementById('inp-cat').value=c; document.getElementById('inp-img-url').value=i; document.getElementById('inp-preview').src=i; document.getElementById('modal').classList.remove('hidden'); }
+        
+        function saveProduct(){
+            const id=document.getElementById('inp-id').value, d={name:document.getElementById('inp-name').value, price:parseFloat(document.getElementById('inp-price').value), category:document.getElementById('inp-cat').value, image:document.getElementById('inp-img-url').value};
+            if(id) db.collection('products').doc(id).update(d); else db.collection('products').add(d);
+            closeModal();
+        }
+
+        function addHero(){ const t=prompt("Tajuk Banner:"); if(t) uploadImageWidget(u=>db.collection('hero_banners').add({title:t,image:u})); }
+        
+        // NEW: Add Trending Product
+        function addTrending(){ 
+            const n=prompt("Nama Produk Trending:"); 
+            if(!n)return; 
+            const p=prompt("Harga (RM):"); 
+            uploadImageWidget(u=>db.collection('trending_products').add({name:n,price:parseFloat(p),image:u,category:'Trending'})); 
+        }
+        
+        function addGallery(){ uploadImageWidget(u=>db.collection('gallery_images').add({image:u})); }
+        
+        function del(c,id){ if(confirm("Padam?")) db.collection(c).doc(id).delete(); }
+        
+        function saveSettings(){ db.collection('settings').doc('config').set({whatsapp:document.getElementById('setting-wa').value, resellerLink:document.getElementById('setting-reseller').value},{merge:true}); alert("Disimpan!"); }
+
+        function uploadImage(inputId, previewId){ uploadImageWidget(u=>{document.getElementById(inputId).value=u; document.getElementById(previewId).src=u;}); }
+        
+        function uploadImageWidget(cb){
+            cloudinary.createUploadWidget({cloudName, uploadPreset, sources:['local','camera']}, (e,r)=>{ if(!e && r && r.event==="success") cb(r.info.secure_url); }).open();
+        }
+    </script>
+</body>
+</html>
+
+
