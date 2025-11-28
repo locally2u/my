@@ -150,20 +150,28 @@
     </div>
 
     <script>
-        // --- 1. CONFIGURATION (WAJIB ISI) ---
-        const firebaseConfig = {
-            apiKey: "API_KEY_ANDA",
-            authDomain: "PROJECT_ID.firebaseapp.com",
-            projectId: "PROJECT_ID",
-            storageBucket: "PROJECT_ID.firebasestorage.app",
-            messagingSenderId: "SENDER_ID",
-            appId: "APP_ID"
-        };
+        // Import the functions you need from the SDKs you need
+import { initializeApp } from "firebase/app";
+// TODO: Add SDKs for Firebase products that you want to use
+// https://firebase.google.com/docs/web/setup#available-libraries
+
+// Your web app's Firebase configuration
+const firebaseConfig = {
+  apiKey: "AIzaSyA2Y2cOh3J7U916Ip0tnDDFVs2fK6sACl0",
+  authDomain: "pipahcookies-21e38.firebaseapp.com",
+  projectId: "pipahcookies-21e38",
+  storageBucket: "pipahcookies-21e38.firebasestorage.app",
+  messagingSenderId: "162482379926",
+  appId: "1:162482379926:web:14d16f5a2444816876f6b7"
+};
+
+// Initialize Firebase
+const app = initializeApp(firebaseConfig);
 
         // Cloudinary (Untuk Upload Gambar)
         // Daftar percuma di cloudinary.com > Settings > Upload > Add Preset (Mode: Unsigned)
-        const cloudName = "CLOUD_NAME_ANDA"; 
-        const uploadPreset = "PRESET_NAME_ANDA"; 
+        const cloudName = "dggh4uztz"; 
+        const uploadPreset = "PipahCookies"; 
 
         // --- INIT ---
         if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
