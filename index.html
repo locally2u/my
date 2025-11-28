@@ -1,11 +1,13 @@
 <!doctype html>
 <html lang="ms">
 <head>
-  <link rel="manifest" href="./manifest.json">
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
   <meta name="theme-color" content="#A67734">
   <title>Pipah Cookies — Kebahagiaan Setiap Hari</title>
+  
+  <!-- Manifest untuk PWA (Icon di Home Screen) -->
+  <link rel="manifest" href="manifest.json">
   
   <!-- Fonts & Icons -->
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&family=Fredoka:wght@300;400;500;600;700&display=swap" rel="stylesheet">
@@ -45,6 +47,13 @@
     }
     .spin-cookie { font-size: 60px; animation: spin 2s linear infinite; }
     @keyframes spin { 100% { transform: rotate(360deg); } }
+    .loader-msg { margin-top:15px; font-weight:bold; color:var(--primary); }
+
+    /* ERROR MESSAGE BOX */
+    .error-box {
+        display: none; background: #ffebee; color: #c62828; padding: 15px; 
+        margin: 20px; border-radius: 15px; border: 1px solid #ef9a9a; text-align: center; font-size: 14px;
+    }
 
     /* HEADER */
     .app-header {
@@ -67,6 +76,7 @@
         background-color: #ddd; background-size: cover; background-position: center;
         scroll-snap-align: center; position: relative; overflow: hidden;
         box-shadow: var(--shadow);
+        display: flex; align-items: center; justify-content: center;
     }
     .hero-text {
         position: absolute; bottom: 0; left: 0; right: 0;
@@ -135,7 +145,8 @@
   <!-- LOADING -->
   <div id="loader">
       <div class="spin-cookie">🍪</div>
-      <p style="margin-top:15px; font-weight:bold; color:var(--primary);">Menyiapkan Biskut...</p>
+      <p class="loader-msg">Menyiapkan Biskut...</p>
+      <p style="font-size:10px; color:#999; margin-top:5px;">(Sila tunggu sekejap...)</p>
   </div>
 
   <!-- HEADER -->
@@ -152,10 +163,14 @@
   <!-- HOME PAGE -->
   <main id="home-view">
       
+      <!-- Error Message Area -->
+      <div id="error-message" class="error-box"></div>
+
       <!-- Banners (Dynamic) -->
       <div class="hero-container" id="banner-list">
-          <div class="hero-card" style="background:#eee; display:flex; align-items:center; justify-content:center; color:#999;">
-              Loading Banners...
+          <!-- Placeholder semasa loading -->
+          <div class="hero-card" style="background:#eee; color:#999;">
+              <div style="text-align:center;">Loading Promo...</div>
           </div>
       </div>
 
@@ -208,26 +223,25 @@
   </nav>
 
   <script>
-    // Import the functions you need from the SDKs you need
-import { initializeApp } from "firebase/app";
-// TODO: Add SDKs for Firebase products that you want to use
-// https://firebase.google.com/docs/web/setup#available-libraries
+    // --- KONFIGURASI FIREBASE (MASUKKAN API KEY ANDA DI SINI) ---
+    // Jangan biarkan 'API_KEY_ANDA', wajib ganti dengan kod sebenar!
+    const firebaseConfig = {
+        apiKey: "AIzaSyA2Y2cOh3J7U916Ip0tnDDFVs2fK6sACl0",  // <--- Ganti ini
+        authDomain: "pipahcookies-21e38.firebaseapp.com", // <--- Ganti ini
+        projectId: "pipahcookies-21e38", // <--- Ganti ini
+        storageBucket: "PROJECT_ID.firebasestorage.app",
+        messagingSenderId: "SENDER_ID",
+        appId: "APP_ID"
+    };
 
-// Your web app's Firebase configuration
-const firebaseConfig = {
-  apiKey: "AIzaSyA2Y2cOh3J7U916Ip0tnDDFVs2fK6sACl0",
-  authDomain: "pipahcookies-21e38.firebaseapp.com",
-  projectId: "pipahcookies-21e38",
-  storageBucket: "pipahcookies-21e38.firebasestorage.app",
-  messagingSenderId: "162482379926",
-  appId: "1:162482379926:web:14d16f5a2444816876f6b7"
-};
-
-// Initialize Firebase
-const app = initializeApp(firebaseConfig);
-
-    // Init Firebase
-    if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+    // Init Firebase with Error Handling
+    try {
+        if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+    } catch (e) {
+        console.error("Firebase Init Error:", e);
+        showError("Masalah Config Firebase. Sila semak API Key.");
+    }
+    
     const db = firebase.firestore();
 
     // STATE
@@ -237,9 +251,26 @@ const app = initializeApp(firebaseConfig);
 
     // STARTUP
     window.onload = function() {
+        
+        // --- SAFETY NET (FIX LOADING FOREVER) ---
+        // Kalau data tak sampai dalam 5 saat, kita buang loader dan bagitahu user
+        setTimeout(() => {
+            const loader = document.getElementById('loader');
+            if(loader && loader.style.display !== 'none') {
+                loader.style.display = 'none';
+                // Jika produk masih kosong, tunjuk error
+                if(products.length === 0) {
+                    showError("<b>Amaran:</b> Gagal menyambung ke database.<br>Mungkin API Key salah atau 'Firestore Rules' belum disetkan.");
+                }
+            }
+        }, 5000); // 5 saat timeout
+
         // 1. Dapatkan Settings
         db.collection('settings').doc('config').onSnapshot(doc => {
             if(doc.exists) settings = doc.data();
+        }, error => {
+            console.log("Settings Error:", error);
+            // Tak perlu tunjuk user, guna default je
         });
 
         // 2. Dapatkan Banners (Realtime)
@@ -253,7 +284,9 @@ const app = initializeApp(firebaseConfig);
                         <div class="hero-text"><h3>${b.title}</h3></div>
                     </div>`;
             });
-            if(snap.empty) list.innerHTML = '<div style="padding:20px; text-align:center; width:100%;">Tiada Banner</div>';
+            if(snap.empty) list.innerHTML = '<div style="padding:20px; text-align:center; width:100%; color:#888;">Tiada Promo Terkini</div>';
+        }, error => {
+            console.log("Banner Error:", error);
         });
 
         // 3. Dapatkan Produk (Realtime)
@@ -262,12 +295,27 @@ const app = initializeApp(firebaseConfig);
             snap.forEach(doc => products.push({ id: doc.id, ...doc.data() }));
             renderProducts(products);
             
+            // Matikan Loader sebab Berjaya!
             document.getElementById('loader').style.opacity = 0;
             setTimeout(()=> document.getElementById('loader').style.display = 'none', 500);
+            
+            // Sembunyikan error jika berjaya
+            document.getElementById('error-message').style.display = 'none';
+
+        }, error => {
+            console.error("Product Error:", error);
+            document.getElementById('loader').style.display = 'none';
+            showError("Gagal memuat turun produk. Sila semak console.");
         });
 
         updateCartUI();
     };
+
+    function showError(msg) {
+        const box = document.getElementById('error-message');
+        box.innerHTML = `⚠️ ${msg}`;
+        box.style.display = 'block';
+    }
 
     // RENDER PRODUK
     function renderProducts(data) {
@@ -286,6 +334,7 @@ const app = initializeApp(firebaseConfig);
                 </div>
             `;
         });
+        if(data.length === 0) list.innerHTML = '<div style="grid-column:1/-1; text-align:center; padding:20px; color:#999;">Tiada produk dijumpai.</div>';
     }
 
     function filterCat(cat, btn) {
@@ -378,16 +427,16 @@ const app = initializeApp(firebaseConfig);
         
         window.location.href = `https://wa.me/${settings.whatsapp}?text=${msg}`;
     }
+
+    // PWA Service Worker Registration
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('./service-worker.js')
+            .then(reg => console.log('SW Registered'))
+            .catch(err => console.log('SW Fail', err));
+      });
+    }
   </script>
-  <script>
-  if ('serviceWorker' in navigator) {
-    window.addEventListener('load', () => {
-      navigator.serviceWorker.register('./service-worker.js')
-        .then(reg => console.log('SW registered!', reg))
-        .catch(err => console.log('SW failed', err));
-    });
-  }
-</script>
 </body>
 </html>
 
