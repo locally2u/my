@@ -57,6 +57,16 @@
     .anim { opacity: 0; animation: fadeUp 0.6s forwards; }
     .d-1 { animation-delay: 0.1s; } .d-2 { animation-delay: 0.2s; } .d-3 { animation-delay: 0.3s; } .d-4 { animation-delay: 0.4s; }
 
+    /* --- CONTINUOUS PULSE ANIMATION --- */
+    @keyframes pulse-cart {
+        0% { transform: scale(1); filter: drop-shadow(0 0 0 rgba(166, 119, 52, 0)); }
+        50% { transform: scale(1.15); filter: drop-shadow(0 0 8px rgba(166, 119, 52, 0.4)); color: var(--primary); }
+        100% { transform: scale(1); filter: drop-shadow(0 0 0 rgba(166, 119, 52, 0)); }
+    }
+    .pulse-active i { 
+        animation: pulse-cart 1.5s infinite ease-in-out; 
+    }
+
     /* --- ZOOM MODAL --- */
     .zoom-modal {
         position: fixed; inset: 0; 
@@ -397,14 +407,14 @@
               <i class="fas fa-home"></i>
           </div>
           
-          <div class="nav-item" onclick="toggleCart()">
+          <div class="nav-item" id="cart-nav-item" onclick="toggleCart()">
               <i class="fas fa-shopping-bag"></i>
               <div class="badge" id="cart-badge">0</div>
           </div>
           
           <div class="nav-item tiktok-special" onclick="window.open('https://vt.tiktok.com/ZSHTysXR5MaoX-rexjk/','_blank')">
               <div class="tiktok-tooltip">
-                  TikTok <span class="txt-highlight">FREE SHIPPING🔥</span>
+                  Order on TikTok for <span class="txt-highlight">FREE SHIPPING</span>
               </div>
               <i class="fab fa-tiktok"></i>
           </div>
@@ -535,9 +545,7 @@
         if(!p)return; 
         i?i.qty++:cart.push({...p,qty:1}); 
         saveCart(); 
-        const b=document.getElementById('cart-badge'); 
-        b.style.transform="scale(1.4)"; 
-        setTimeout(()=>b.style.transform="scale(1)",200); 
+        // No manual pulse trigger needed here, updateCartUI handles state
     }
     
     function saveCart() { localStorage.setItem('pipah_cart', JSON.stringify(cart)); updateCartUI(); }
@@ -548,7 +556,7 @@
     
     function openReseller() { if(settings.resellerLink) window.open(settings.resellerLink, '_blank'); }
 
-    // --- UPDATED TIER PRICING LOGIC ---
+    // --- UPDATE CART UI & HANDLE PULSE STATE ---
     function updateCartUI() { 
         const l = document.getElementById('cart-content'); 
         l.innerHTML = ''; 
@@ -558,21 +566,18 @@
             let unitPrice = parseFloat(x.price); // Default
             let activeLabel = "";
 
-            // Check Stockist
             if (x.priceTier3 && x.minQty3 && x.qty >= parseInt(x.minQty3)) {
                 unitPrice = parseFloat(x.priceTier3);
-                activeLabel = " - RM2 OFF";
+                activeLabel = " (Stokis)";
             }
-            // Check Agent
             else if (x.priceTier2 && x.minQty2 && x.qty >= parseInt(x.minQty2)) {
                 unitPrice = parseFloat(x.priceTier2);
-                activeLabel = " - RM1 OFF";
+                activeLabel = " (Ejen)";
             }
 
             t += unitPrice * x.qty; 
             c += x.qty; 
             
-            // Display Price Logic
             let displayPriceHtml = `RM ${unitPrice.toFixed(2)}`;
             if(unitPrice < x.price) {
                 displayPriceHtml = `
@@ -600,10 +605,18 @@
         document.getElementById('cart-total').innerText = "RM " + t.toFixed(2); 
         document.getElementById('cart-badge').innerText = c; 
         document.getElementById('cart-badge').classList.toggle('show', c > 0); 
-        if (c === 0) l.innerHTML = '<div style="text-align:center; padding-top:40px; color:#ccc;">Bakul kosong</div>'; 
+        
+        // --- CONTINUOUS PULSE LOGIC ---
+        const navItem = document.getElementById('cart-nav-item');
+        if(c > 0) {
+            navItem.classList.add('pulse-active');
+        } else {
+            navItem.classList.remove('pulse-active');
+            l.innerHTML = '<div style="text-align:center; padding-top:40px; color:#ccc;">Bakul kosong</div>'; 
+        }
     }
 
-    // --- UPDATED CHECKOUT TO SAVE FINAL PRICE ---
+    // --- CHECKOUT & AUTO CLEAR CART ---
     function goToCheckout() { 
         if(cart.length===0) return alert("Bakul kosong!"); 
         const n=document.getElementById('cust-name').value, o=document.getElementById('cust-note').value; 
@@ -619,15 +632,20 @@
             return { ...x, finalPrice: unitPrice }; 
         });
 
-        localStorage.setItem('pipah_cart', JSON.stringify(finalCartItems)); 
+        // Save items inside Order Info for the Invoice Page
         localStorage.setItem('pipah_order_info', JSON.stringify({ 
             orderId:'ORD-'+Math.floor(100000+Math.random()*900000), 
             date:new Date().toISOString(), 
             buyerName:n, 
             buyerAddress:o||'-', 
             whatsappAdmin:settings.whatsapp,
-            totalAmount: finalTotal 
+            totalAmount: finalTotal,
+            items: finalCartItems // <--- IMPORTANT: Invoice must read this!
         })); 
+        
+        // CLEAR CART
+        localStorage.removeItem('pipah_cart');
+        cart = []; // Reset memory
         
         window.location.href='invois.html'; 
     }
